@@ -2,7 +2,10 @@
 #include "vm.h"
 #include <stdint.h>
 
-static uint8_t display[64][32] = { 0 };
+#define WIDTH 64
+#define HEIGHT 32
+
+static uint8_t display[HEIGHT][WIDTH] = { 0 };
 
 void draw_display(void);
 void clear_display(void);

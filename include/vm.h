@@ -1,5 +1,9 @@
 #pragma once
+#include "stack.h"
 #include <stdint.h>
+
+#define REGISTER_COUNT 16
+#define MEMORY_SIZE 4096
 
 typedef struct chip8 {
     /* program counter */
@@ -9,10 +13,10 @@ typedef struct chip8 {
     /* index register */
     uint16_t ir;
     /* V0 - VF */
-    uint8_t registers[16];
+    uint8_t registers[REGISTER_COUNT];
     /* 4kb of ram */
-    uint8_t memory[4096];
-    uint16_t stack[16];
+    uint8_t memory[MEMORY_SIZE];
+    stack* stack;
     /* delay timer */
     uint8_t dt;
     /* sound timer */
