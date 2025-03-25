@@ -1,10 +1,8 @@
 #include "display.h"
-#include "stack.h"
 #include "vm.h"
 #include <raylib.h>
-#include <stdio.h>
-#include <stdlib.h>
-int main(int argc, char* argv[])
+
+int main(void)
 {
     InitWindow(640, 320, "CHIP-8 Emulator");
     SetTargetFPS(60);
@@ -22,7 +20,7 @@ int main(int argc, char* argv[])
         EndDrawing();
     }
 
-    free(vm);
+    free_vm(vm);
     CloseWindow();
 
     return 0;

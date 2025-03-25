@@ -26,3 +26,4 @@ typedef struct chip8 {
 void load_font(chip8* vm);
 chip8* load_rom(const char* path);
 void print_memory(const chip8* vm);
+void free_vm(chip8* vm);

@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void free_vm(chip8* vm)
+{
+    free_stack(vm->stack);
+    free(vm);
+}
+
 /* load rom into memory from 1FF onwards */
 void load_font(chip8* vm)
 {
