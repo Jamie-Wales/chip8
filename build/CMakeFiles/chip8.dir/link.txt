@@ -1,0 +1,1 @@
+/opt/homebrew/opt/llvm/bin/clang  -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/chip8.dir/src/display.c.o CMakeFiles/chip8.dir/src/main.c.o CMakeFiles/chip8.dir/src/vm.c.o -o chip8  /opt/homebrew/lib/libraylib.dylib
