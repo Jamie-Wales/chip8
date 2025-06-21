@@ -1,6 +1,9 @@
 #include "display.h"
 #include <raylib.h>
 
+#define FONT_START 5
+#define BYTE_WIDTH 0x80
+
 void draw_display(void)
 {
     ClearBackground(BLACK);
@@ -30,12 +33,12 @@ void set_pixel(int x, int y)
 
 void test_font(chip8* vm, int font)
 {
-    uint8_t* character = &vm->memory[font * 5];
+    uint8_t* character = &vm->memory[font * FONT_START];
     for (int row = 0; row < 5; row++) {
         uint8_t byte = character[row];
 
         for (int col = 0; col < 8; col++) {
-            if ((byte & (0x80 >> col)) != 0) {
+            if ((byte & (BYTE_WIDTH >> col)) != 0) {
                 display[col][row] = 1;
             }
         }

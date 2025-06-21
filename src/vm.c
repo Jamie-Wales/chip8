@@ -1,7 +1,13 @@
 #include "vm.h"
 #include "stack.h"
+#include <fenv.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+
+static clock_t delay_timer_prev;
+static clock_t sound_timer_prev;
 
 void free_vm(chip8* vm)
 {
@@ -60,6 +66,11 @@ chip8* load_rom(const char* path)
     vm->dt = 0;
     vm->st = 0;
     vm->stack = init_stack();
+    vm->clock = clock();
+    delay_timer_prev = clock();
+    sound_timer_prev = clock();
+    beep = LoadSound("resources/beep-329314.mp3");
+
     for (int i = 0; i < MEMORY_SIZE; i++) {
         vm->memory[i] = 0;
     }
@@ -95,4 +106,53 @@ void print_memory(const chip8* vm)
         printf("%02x ", vm->memory[i]);
     }
     printf("\n");
+}
+
+void delay_timer(chip8* vm)
+{
+    clock_t current = clock();
+    int decrement = (current - delay_timer_prev) >= CLOCKS_PER_SEC ? 1 : 0;
+    vm->dt -= vm->dt > 0 ? decrement : 0;
+    delay_timer_prev = current;
+}
+
+void sound_timer(chip8* vm)
+{
+    clock_t current = clock();
+    int decrement = (current - sound_timer_prev) >= CLOCKS_PER_SEC ? 1 : 0;
+    vm->st -= vm->st > 0 ? decrement : 0;
+    sound_timer_prev = current;
+}
+
+void play_sound(chip8* vm)
+{
+    if (vm->st > 0)
+        PlaySound(beep);
+}
+
+void execute(chip8* vm, uint16_t instruction)
+{
+    printf("Fetched opcode: 0x%X\n", instruction);
+    uint8_t x = (instruction & 0x0F00) >> 8;
+    uint8_t y = (instruction & 0x00F0) >> 4;
+    uint8_t n = instruction & 0x000F;
+    uint8_t nn = instruction & 0x00FF;
+    uint16_t nnn = instruction & 0x0FFF;
+    printf("Executing opcode: 0x%X\n", instruction);
+    switch (instruction & 0xF000) {
+    case 0:
+        break;
+    }
+}
+
+void fetch(chip8* vm)
+{
+
+    clock_t current = clock();
+    if ((current - vm->clock) >= INSTRUCTION_SPEED) {
+        uint16_t instruction = (vm->memory[vm->pc] << 8) | vm->memory[vm->pc + 1];
+        execute(vm, instruction);
+        vm->pc += 2;
+        vm->clock += INSTRUCTION_SPEED;
+    }
 }
