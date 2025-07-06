@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "display.h"
 #include "stack.h"
 #include <fenv.h>
 #include <stdint.h>
@@ -140,8 +141,24 @@ void execute(chip8* vm, uint16_t instruction)
     uint16_t nnn = instruction & 0x0FFF;
     printf("Executing opcode: 0x%X\n", instruction);
     switch (instruction & 0xF000) {
-    case 0:
+    case 0x0000: {
+        /* ----- sys calls ----- */
+        switch (nn & 0xE0) {
+            clear_display();
+            break;
+        }
         break;
+    }
+    case 1:
+        vm->pc = nn;
+        break;
+    case 6:
+        vm->registers[x] = nn;
+        break;
+    case 'A':
+        vm->ir = nnn;
+        break;
+    case 'D':
     }
 }
 
