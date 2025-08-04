@@ -7,15 +7,10 @@ int main(void)
     InitWindow(640, 320, "CHIP-8 Emulator");
     SetTargetFPS(60);
 
-    chip8* vm = load_rom("15 Puzzle [Roger Ivie].ch8");
-    int font = 0;
+    chip8* vm = load_rom("IBM Logo.ch8");
     while (!WindowShouldClose()) {
-
+        fetch(vm);
         BeginDrawing();
-        clear_display();
-        test_font(vm, font);
-        font++;
-        font %= 16;
         draw_display();
         EndDrawing();
     }

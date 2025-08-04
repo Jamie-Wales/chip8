@@ -26,9 +26,13 @@ void clear_display(void)
     }
 }
 
-void set_pixel(int x, int y)
+bool set_pixel(int y, int x)
 {
-    display[x][y] = display[x][y] ^ display[x][y];
+    bool collision = (display[y][x] == 1);
+
+    display[y][x] ^= 1;
+
+    return collision && (display[y][x] == 0);
 }
 
 void test_font(chip8* vm, int font)

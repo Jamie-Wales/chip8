@@ -1,7 +1,6 @@
 #include "vm.h"
 #include "display.h"
 #include "stack.h"
-#include <fenv.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +8,8 @@
 
 static clock_t delay_timer_prev;
 static clock_t sound_timer_prev;
+
+#define TIMER_INTERVAL (CLOCKS_PER_SEC / 60)
 
 void free_vm(chip8* vm)
 {
@@ -112,26 +113,57 @@ void print_memory(const chip8* vm)
 void delay_timer(chip8* vm)
 {
     clock_t current = clock();
-    int decrement = (current - delay_timer_prev) >= CLOCKS_PER_SEC ? 1 : 0;
-    vm->dt -= vm->dt > 0 ? decrement : 0;
-    delay_timer_prev = current;
+    if (vm->dt > 0 && (current - delay_timer_prev) >= TIMER_INTERVAL) {
+        vm->dt--;
+        delay_timer_prev = current;
+    }
 }
 
 void sound_timer(chip8* vm)
 {
     clock_t current = clock();
-    int decrement = (current - sound_timer_prev) >= CLOCKS_PER_SEC ? 1 : 0;
-    vm->st -= vm->st > 0 ? decrement : 0;
-    sound_timer_prev = current;
+    if (vm->st > 0 && (current - sound_timer_prev) >= TIMER_INTERVAL) {
+        vm->st--;
+        sound_timer_prev = current;
+    }
 }
-
 void play_sound(chip8* vm)
 {
     if (vm->st > 0)
         PlaySound(beep);
 }
 
-void execute(chip8* vm, uint16_t instruction)
+void draw(chip8* vm, uint8_t x, uint8_t y, uint8_t n)
+
+{
+    uint16_t sprite_address = vm->ir;
+    uint8_t start_x = vm->registers[x] % 64;
+    uint8_t start_y = vm->registers[y] % 32;
+    uint8_t sprite_height = n;
+
+    vm->registers[0xF] = 0;
+
+    for (int y_line = 0; y_line < sprite_height; y_line++) {
+        uint8_t current_y = start_y + y_line;
+        if (current_y >= 32)
+            break;
+
+        uint8_t sprite_byte = vm->memory[sprite_address + y_line];
+
+        for (int x_line = 0; x_line < 8; x_line++) {
+            uint8_t current_x = start_x + x_line;
+            if (current_x >= 64)
+                break;
+
+            if (sprite_byte & (0x80 >> x_line)) {
+                if (set_pixel(current_x, current_y)) {
+                    vm->registers[0xF] = 1;
+                }
+            }
+        }
+    }
+}
+bool execute(chip8* vm, uint16_t instruction)
 {
     printf("Fetched opcode: 0x%X\n", instruction);
     uint8_t x = (instruction & 0x0F00) >> 8;
@@ -142,24 +174,33 @@ void execute(chip8* vm, uint16_t instruction)
     printf("Executing opcode: 0x%X\n", instruction);
     switch (instruction & 0xF000) {
     case 0x0000: {
-        /* ----- sys calls ----- */
-        switch (nn & 0xE0) {
+        switch (nn) {
+        case 0x00E0:
             clear_display();
             break;
         }
         break;
     }
-    case 1:
-        vm->pc = nn;
-        break;
-    case 6:
+    case 0x1000:
+        vm->pc = nnn;
+        return false;
+    case 0x6000:
         vm->registers[x] = nn;
         break;
-    case 'A':
+    case 0x7000:
+        vm->registers[x] += nn;
+        break;
+    case 0xA000:
         vm->ir = nnn;
         break;
-    case 'D':
+    case 0xD000:
+        draw(vm, x, y, n);
+        break;
+    default:
+        printf("Error: Unknown opcode 0x%X\n", instruction);
+        break;
     }
+    return true;
 }
 
 void fetch(chip8* vm)
@@ -168,8 +209,9 @@ void fetch(chip8* vm)
     clock_t current = clock();
     if ((current - vm->clock) >= INSTRUCTION_SPEED) {
         uint16_t instruction = (vm->memory[vm->pc] << 8) | vm->memory[vm->pc + 1];
-        execute(vm, instruction);
-        vm->pc += 2;
-        vm->clock += INSTRUCTION_SPEED;
+        if (execute(vm, instruction)) {
+            vm->pc += 2;
+        }
+        vm->clock = clock();
     }
 }
