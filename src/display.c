@@ -4,35 +4,43 @@
 #define FONT_START 5
 #define BYTE_WIDTH 0x80
 
+// Corrected draw_display
 void draw_display(void)
 {
     ClearBackground(BLACK);
 
-    for (int x = 0; x < 64; x++) {
-        for (int y = 0; y < 32; y++) {
-            if (display[x][y] == 1) {
+    for (int y = 0; y < 32; y++) { // Y loop should be outer for rows
+        for (int x = 0; x < 64; x++) { // X loop should be inner for columns
+            if (display[y][x] == 1) { // CORRECT: display[y][x]
                 DrawRectangle(x * 10, y * 10, 10, 10, WHITE);
             }
         }
     }
 }
 
+// Corrected clear_display
 void clear_display(void)
 {
-    for (int x = 0; x < 64; x++) {
-        for (int y = 0; y < 32; y++) {
-            display[x][y] = 0;
+    for (int y = 0; y < 32; y++) {
+        for (int x = 0; x < 64; x++) {
+            display[y][x] = 0; // CORRECT: display[y][x]
         }
     }
 }
 
-bool set_pixel(int y, int x)
+bool set_pixel(int x, int y)
 {
+    // Prevent drawing outside the screen bounds
+    if (x < 0 || x >= 64 || y < 0 || y >= 32) {
+        return false;
+    }
+
+    // Array access is still [row][col], which is [y][x]
     bool collision = (display[y][x] == 1);
 
-    display[y][x] ^= 1;
+    display[y][x] ^= 1; // Flip the pixel
 
-    return collision && (display[y][x] == 0);
+    return collision; // Return true if a pixel was erased
 }
 
 void test_font(chip8* vm, int font)
