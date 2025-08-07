@@ -38,6 +38,7 @@ void print_memory(const chip8* vm);
 void free_vm(chip8* vm);
 void delay_timer(chip8* vm);
 void sound_timer(chip8* vm);
+void play_sound(chip8* vm);
 
 void fetch(chip8* vm);
 

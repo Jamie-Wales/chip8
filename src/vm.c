@@ -7,9 +7,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-static clock_t delay_timer_prev;
-static clock_t sound_timer_prev;
-
 #define TIMER_INTERVAL (CLOCKS_PER_SEC / 60)
 
 void free_vm(chip8* vm)
@@ -191,7 +188,8 @@ chip8* load_rom(const char* path)
     vm->dt = 0;
     vm->st = 0;
     vm->stack = init_stack();
-    beep = LoadSound("resources/beep-329314.mp3");
+    InitAudioDevice();
+    beep = LoadSound("../resources/beep-329314.wav");
 
     for (int i = 0; i < MEMORY_SIZE; i++) {
         vm->memory[i] = 0;
@@ -332,13 +330,11 @@ void keyboard_check(chip8* vm, uint8_t x, uint16_t nn)
     switch (nn) {
     case 0x009E:
         if (IsKeyDown(raylib_key)) {
-            printf("DEBUG_KEY: SKP V%X (key %X) was pressed. Skipping.\n", x, key_value);
             vm->pc += 2;
         }
         break;
     case 0x00A1:
         if (!IsKeyDown(raylib_key)) {
-            printf("DEBUG_KEY: SKNP V%X (key %X) was NOT pressed. Skipping.\n", x, key_value);
             vm->pc += 2;
         }
         break;
@@ -352,7 +348,6 @@ bool execute_fx_opcodes(chip8* vm, uint8_t x, uint16_t nn)
         vm->registers[x] = vm->dt;
         break;
     case 0x0A: {
-        printf("DEBUG_KEY: Waiting for key press (FX0A)...\n");
         int raylib_key = GetKeyPressed();
 
         if (raylib_key == 0) {
@@ -363,12 +358,10 @@ bool execute_fx_opcodes(chip8* vm, uint8_t x, uint16_t nn)
                 if (key_map[i] == raylib_key) {
                     vm->registers[x] = i;
                     key_found = true;
-                    printf("DEBUG_KEY: Key %X pressed and stored in V%X.\n", i, x);
                     break;
                 }
             }
             if (!key_found) {
-                // A non-CHIP-8 key was pressed, so we must continue waiting.
                 vm->pc -= 2;
             }
         }
@@ -417,9 +410,6 @@ bool execute(chip8* vm, uint16_t instruction)
     uint8_t n = instruction & 0x000F;
     uint8_t nn = instruction & 0x00FF;
     uint16_t nnn = instruction & 0x0FFF;
-
-    printf("%s\n", disassemble(instruction));
-    fflush(stdout);
 
     switch (instruction & 0xF000) {
     case 0x0000:
